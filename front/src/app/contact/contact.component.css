@@ -1,0 +1,50 @@
+/* Style général du formulaire */
+form {
+    max-width: 500px;
+    margin: 20px auto;
+    padding: 20px;
+    background: #ffffff;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+  }
+  
+  /* Style des champs Material */
+  mat-form-field {
+    width: 100%;
+    margin-bottom: 16px;
+  }
+  
+  /* Style du bouton */
+  button {
+    width: 100%;
+    padding: 10px;
+    font-size: 16px;
+    font-weight: bold;
+    border-radius: 5px;
+  }
+  
+  /* Animation au focus */
+  mat-form-field.mat-form-field-appearance-fill .mat-form-field-flex {
+    background-color: #f5f5f5;
+    border-radius: 5px;
+    transition: all 0.3s ease-in-out;
+  }
+  
+  mat-form-field.mat-form-field-appearance-fill .mat-form-field-flex:hover {
+    background-color: #e0e0e0;
+  }
+  
+  /* Erreurs en rouge */
+  mat-error {
+    font-size: 12px;
+    color: #d32f2f;
+  }
+  
+  /* Responsive */
+  @media (max-width: 600px) {
+    form {
+      width: 90%;
+      padding: 15px;
+    }
+  }
+  

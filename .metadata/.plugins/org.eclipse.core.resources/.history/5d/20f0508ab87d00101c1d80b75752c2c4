@@ -1,0 +1,38 @@
+package back;
+
+import com.sun.net.httpserver.HttpServer;
+import java.net.InetSocketAddress;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.util.concurrent.Executor;
+
+public class Server {
+   static Connection connection;
+
+   public static void start() throws Exception {
+      connectDatabase();
+      
+      HttpServer server = HttpServer.create(new InetSocketAddress(8000), 0);
+      
+      AccountHandler accountHandler = new AccountHandler(connection);
+      server.createContext("/account", accountHandler);
+      server.createContext("/token", accountHandler);
+      
+      server.createContext("/products", new ProductsHandler(connection));
+      server.setExecutor((Executor)null);
+      server.start();
+      System.out.println("Serveur fonctionne sur http://localhost:8000/products");
+   }
+
+   private static void connectDatabase() throws Exception {
+      String host = "localhost";
+      String port = "8889";
+      String dbName = "productsDB";
+      String user = "root";
+      String password = "root";
+      String url = "jdbc:mysql://" + host + ":" + port + "/" + dbName + "?useSSL=false&serverTimezone=UTC";
+      Class.forName("com.mysql.cj.jdbc.Driver");
+      connection = DriverManager.getConnection(url, user, password);
+      System.out.println("BDD connexion!");
+   }
+}

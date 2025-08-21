@@ -1,0 +1,56 @@
+import io.jsonwebtoken.security.Keys;
+import java.security.Key;
+
+private void handleLogin(HttpExchange exchange) throws IOException {
+    try {
+        // Lire le body JSON
+        String body = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+        Map<String, String> data = JsonUtils.parseJson(body);
+
+        String email = data.get("email");
+        String password = data.get("password");
+
+        if (email == null || password == null) {
+            sendResponse(exchange, 400, "{\"error\":\"Données manquantes\"}");
+            return;
+        }
+
+        // Récupération du hash en base
+        String storedHash = null;
+        try (PreparedStatement stmt = connection.prepareStatement(
+                "SELECT password FROM users WHERE email = ?")) {
+            stmt.setString(1, email);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) storedHash = rs.getString("password");
+            }
+        }
+
+        if (storedHash == null || !BCrypt.checkpw(password, storedHash)) {
+            sendResponse(exchange, 401, "{\"error\":\"Email ou mot de passe incorrect\"}");
+            return;
+        }
+
+        boolean isAdmin = "admin@admin.com".equals(email);
+
+        // --- Génération correcte du JWT avec clé secrète ---
+        Key key = Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
+
+        String token = Jwts.builder()
+                .setSubject(email)
+                .claim("isAdmin", isAdmin)
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + 86400000)) // 24h
+                .signWith(key, SignatureAlgorithm.HS256) // Utilisation correcte
+                .compact();
+
+        System.out.println("Token généré : " + token);
+
+        // Construction de la réponse JSON
+        String response = "{ \"message\": \"Connexion réussie\", \"token\": \"" + token + "\", \"isAdmin\": " + isAdmin + " }";
+        sendResponse(exchange, 200, response);
+
+    } catch (Exception e) {
+        e.printStackTrace();
+        sendResponse(exchange, 500, "{\"error\":\"Erreur interne\"}");
+    }
+}

@@ -1,0 +1,23 @@
+<form [formGroup]="productForm" (ngSubmit)="onSubmit()" class="p-fluid">
+  <div class="field">
+    <label for="name">Nom</label>
+    <input id="name" pInputText formControlName="name" />
+  </div>
+
+  <div class="field">
+    <label for="price">Prix (€)</label>
+    <input id="price" type="number" pInputText formControlName="price" />
+  </div>
+
+  <div class="field">
+    <label for="category">Catégorie</label>
+    <input id="category" pInputText formControlName="category" />
+  </div>
+
+  <div class="field">
+    <label for="description">Description</label>
+    <textarea id="description" pInputTextarea formControlName="description"></textarea>
+  </div>
+
+<button pButton type="submit" [label]="isEditMode ? 'Modifier' : 'Ajouter'" [disabled]="productForm.invalid"></button>
+</form>

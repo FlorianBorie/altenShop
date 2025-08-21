@@ -1,0 +1,36 @@
+<form [formGroup]="contactForm" (ngSubmit)="onSubmit()">
+ 
+  <mat-form-field appearance="fill">
+    <mat-label>Nom</mat-label>
+    <input matInput formControlName="name" placeholder="Votre nom">
+    <mat-error *ngIf="contactForm.get('name')?.hasError('required')">
+      Veuillez entrer un nom valide.
+    </mat-error>
+  </mat-form-field>
+
+  <mat-form-field appearance="fill">
+    <mat-label>Email</mat-label>
+    <input matInput formControlName="email" placeholder="Votre email">
+    <mat-error *ngIf="contactForm.get('email')?.hasError('required')">
+      Veuillez entrer une adresse email.
+    </mat-error>
+    <mat-error *ngIf="contactForm.get('email')?.hasError('email')">
+      L'adresse email est invalide.
+    </mat-error>
+  </mat-form-field>
+
+  <mat-form-field appearance="fill">
+    <mat-label>Message</mat-label>
+    <textarea matInput formControlName="message" placeholder="Votre message"></textarea>
+    <mat-error *ngIf="contactForm.get('message')?.hasError('required')">
+      Veuillez entrer un message.
+    </mat-error>
+    <mat-error *ngIf="contactForm.get('message')?.hasError('maxlength')">
+      Le message ne doit pas dépasser 300 caractères.
+    </mat-error>
+  </mat-form-field>
+
+  <button mat-raised-button color="primary" type="submit" [disabled]="!contactForm.valid">
+    Envoyer
+  </button>
+</form>

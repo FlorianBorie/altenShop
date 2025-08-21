@@ -1,0 +1,8 @@
+<h2>Panier</h2>
+<ul>
+  <li *ngFor="let product of panierItems">{{ product.name }} - {{ product.price }} € - quantité : {{ product.quantity }}
+      <div class="mt-1">
+        <button style="background-color: red;" (click)="removeFromPanier(product.id!)">Supprimer</button>
+    </div>
+  </li>
+</ul>
