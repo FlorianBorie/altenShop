@@ -19,5 +19,15 @@
     <textarea id="description" pInputTextarea formControlName="description"></textarea>
   </div>
 
-<button pButton type="submit" [label]="isEditMode ? 'Modifier' : 'Ajouter'" [disabled]="productForm.invalid"></button>
+  <div class="field">
+    <label for="inventoryStatus">Stock</label>
+    <select id="inventoryStatus" formControlName="inventoryStatus">
+      <option *ngFor="let option of inventoryOptions" [ngValue]="option.value">
+        {{ option.label }}
+      </option>
+    </select>
+  </div>
+
+  <button pButton type="submit" [label]="product.id ? 'Modifier' : 'Ajouter'" [disabled]="productForm.invalid"></button>
+  <button pButton type="button" label="Annuler" (click)="onCancel()"></button>
 </form>

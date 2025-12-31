@@ -1,65 +1,71 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable } from 'rxjs';
-
-export interface Product {
-  id?: number;
-  code: string;
-  name: string;
-  description: string;
-  image: string;
-  category: string;
-  price: number;
-  quantity: number;
-  internalReference: string;
-  shellId: number;
-  inventoryStatus: string;
-  rating: number;
-  createdAt: number;
-  updatedAt: number;
-}
+import { Observable, map } from 'rxjs';
+import { Product } from '../products/data-access/product.model';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ProductService {
+
   private baseUrl = 'http://localhost:8000/products';
 
   constructor(private http: HttpClient) { }
 
   private getAuthHeaders(): HttpHeaders {
-    const token = localStorage.getItem('token'); // Récupère le token stocké après login
+    const token = localStorage.getItem('token');
     return new HttpHeaders({
-      'Authorization': `Bearer ${token}`,
+      Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json'
     });
   }
 
-  // GET /products/list
+  private normalizeInventoryStatus(product: any): Product {
+    return {
+      ...product,
+      inventoryStatus: product.inventoryStatus as 'INSTOCK' | 'LOWSTOCK' | 'OUTOFSTOCK' | null
+    };
+  }
+
   getAll(): Observable<Product[]> {
-    return this.http.get<Product[]>(this.baseUrl);
+    return this.http.get<Product[]>(this.baseUrl).pipe(
+      map(products => products.map(p => this.normalizeInventoryStatus(p)))
+    );
   }
 
-  // GET /products/{id}
   getById(id: number): Observable<Product> {
-    return this.http.get<Product>(`${this.baseUrl}/${id}`);
+    return this.http.get<Product>(`${this.baseUrl}/${id}`).pipe(
+      map(p => this.normalizeInventoryStatus(p))
+    );
   }
 
-  // POST /products
   create(product: Product): Observable<Product> {
-    const headers = this.getAuthHeaders();
-    return this.http.post<Product>(this.baseUrl, product, { headers });
+    return this.http.post<Product>(
+      this.baseUrl,
+      this.cleanProduct(product),
+      { headers: this.getAuthHeaders() }
+    );
   }
 
-  // PUT /products/{id}
   update(id: number, product: Product): Observable<Product> {
-    const headers = this.getAuthHeaders();
-    return this.http.put<Product>(`${this.baseUrl}/${id}`, product, { headers });
+    return this.http.put<Product>(
+      `${this.baseUrl}/${id}`,
+      this.cleanProduct(product),
+      { headers: this.getAuthHeaders() }
+    ).pipe(map(p => this.normalizeInventoryStatus(p)));
   }
 
-  // DELETE /products/{id}
-  delete(id: number): Observable<void> {
-    const headers = this.getAuthHeaders();
-    return this.http.delete<void>(`${this.baseUrl}/${id}`, { headers });
+  delete(id: number): Observable<string> {
+    return this.http.delete(`${this.baseUrl}/${id}`, {
+      headers: this.getAuthHeaders(),
+      responseType: 'text'  // <- important
+    });
+  }
+
+  private cleanProduct(product: Product) {
+    const p: any = { ...product };
+    delete p.createdAt;
+    delete p.updatedAt;
+    return p;
   }
 }

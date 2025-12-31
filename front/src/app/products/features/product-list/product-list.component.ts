@@ -1,16 +1,15 @@
-// product-list.component.ts
 import { CommonModule } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
-import { PanierService } from 'app/panier/panier.service';
 import { Product } from '../../data-access/product.model';
 import { ProductService } from '../../../services/product.service';
-import { ProductFormComponent } from 'app/products/ui/product-form/product-form.component';
-import { ButtonModule } from 'primeng/button';
-import { CardModule } from 'primeng/card';
-import { DataViewModule } from 'primeng/dataview';
-import { DialogModule } from 'primeng/dialog';
+import { PanierService } from 'app/panier/panier.service';
 
-const emptyProduct: Product = {
+import { CardModule } from 'primeng/card';
+import { ButtonModule } from 'primeng/button';
+import { DialogModule } from 'primeng/dialog';
+import { ProductFormComponent } from '../../ui/product-form/product-form.component';
+
+const EMPTY_PRODUCT: Product = {
   id: 0,
   code: '',
   name: '',
@@ -21,7 +20,7 @@ const emptyProduct: Product = {
   quantity: 0,
   internalReference: '',
   shellId: 0,
-  inventoryStatus: 'INSTOCK',
+  inventoryStatus: null,
   rating: 0,
   createdAt: 0,
   updatedAt: 0,
@@ -29,95 +28,73 @@ const emptyProduct: Product = {
 
 @Component({
   selector: 'app-product-list',
+  standalone: true,
   templateUrl: './product-list.component.html',
   styleUrls: ['./product-list.component.scss'],
-  standalone: true,
-  imports: [DataViewModule, CardModule, ButtonModule, DialogModule, ProductFormComponent, CommonModule],
+  imports: [
+    CommonModule,
+    CardModule,
+    ButtonModule,
+    DialogModule,
+    ProductFormComponent
+  ]
 })
 export class ProductListComponent {
-  showForm = false;
-  selectedProduct: Product | null = null;
+
   private readonly productService = inject(ProductService);
   private readonly panierService = inject(PanierService);
 
-  public readonly products = signal<Product[]>([]);
-  public isDialogVisible = false;
-  public isCreation = false;
-  public readonly editedProduct = signal<Product>(emptyProduct);
+  readonly products = signal<Product[]>([]);
+  readonly editedProduct = signal<Product>(EMPTY_PRODUCT);
+
+  isDialogVisible = false;
+  isCreation = false;
 
   constructor() {
-    // Charger les produits depuis le backend
     this.loadProducts();
   }
 
   private loadProducts() {
     this.productService.getAll().subscribe({
-      next: (data) => {
-      const mapped = data.map(p => ({
-        ...emptyProduct,
-        id: p.id ?? 0,  // 0 par défaut si undefined
-        name: p.name,
-        price: p.price
-      }));
-      this.products.set(mapped);
-    },
-    error: (err) => console.error(err)
-  });
-  }
-
-  public onCreate() {
-    this.isCreation = true;
-    this.isDialogVisible = true;
-    this.editedProduct.set(emptyProduct);
-  }
-
-  public onUpdate(product: Product) {
-    this.isCreation = false;
-    this.isDialogVisible = true;
-    this.editedProduct.set(product);
-  }
-
-  public onDelete(product: Product) {
-    if (!product.id) return;
-    this.productService.delete(product.id).subscribe({
-      next: () => this.loadProducts(),
-      error: (err) => console.error('Erreur suppression produit', err),
+      next: (data) => this.products.set(data),
+      error: console.error
     });
   }
 
-  public onSave(product: Product) {
-    if (this.isCreation) {
-      this.productService.create(product).subscribe({
-        next: () => this.loadProducts(),
-        error: (err) => console.error('Erreur création produit', err),
-      });
-    } else {
-      this.productService.update(product.id!, product).subscribe({
-        next: () => this.loadProducts(),
-        error: (err) => console.error('Erreur mise à jour produit', err),
-      });
-    }
-    this.closeDialog();
-  }
-
-  public onCancel() {
-    this.closeDialog();
-  }
-
-  private closeDialog() {
-    this.isDialogVisible = false;
-  }
-
-  public addToPanier(product: Product) {
-    this.panierService.addToPanier(product);
-  }
-
-  public trackById(index: number, product: Product): number {
+  trackById(_: number, product: Product) {
     return product.id;
   }
 
-  newProduct() {
-    this.selectedProduct = null;  // on n'a pas de produit sélectionné
-    this.showForm = true;          // afficher le formulaire
+  onCreate() {
+    this.isCreation = true;
+    this.editedProduct.set({ ...EMPTY_PRODUCT });
+    this.isDialogVisible = true;
+  }
+
+  onUpdate(product: Product) {
+    this.isCreation = false;
+    this.editedProduct.set({ ...product });
+    this.isDialogVisible = true;
+  }
+
+  onDelete(product: Product) {
+    this.productService.delete(product.id).subscribe(() => {
+      this.loadProducts();
+    });
+  }
+
+  onSave(product: Product) {
+    const request$ = this.isCreation
+      ? this.productService.create(product)
+      : this.productService.update(product.id, product);
+
+    request$.subscribe(() => {
+      this.loadProducts();
+      this.isDialogVisible = false;
+    });
+  }
+
+  addToPanier(product: Product) {
+    this.panierService.addToPanier(product);
   }
 }

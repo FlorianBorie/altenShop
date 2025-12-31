@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import {PanierService} from '../panier.service';
-import {Product} from '../../services/product.service';
+
+import { Product } from '../../products/data-access/product.model';
 import { CommonModule } from '@angular/common';
 import {MatButtonModule} from '@angular/material/button';
 
